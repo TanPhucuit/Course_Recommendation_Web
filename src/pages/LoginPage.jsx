@@ -9,49 +9,37 @@ import AnimatedCounter from '../components/CountingNumber';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 
 const LoginPage = () => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({
-    username: '',
-    password: '',
-    fullName: '',
-    email: ''
-  });
+  const [userId, setUserId] = useState('');
   const [error, setError] = useState('');
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showFAQ, setShowFAQ] = useState(false);
 
-  const { login, register } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    if (isLogin) {
-      const result = login(formData.username, formData.password);
-      if (result.success) {
-        if (result.user.role === 'admin') {
-          navigate('/admin');
-        } else {
-          navigate('/dashboard');
-        }
+    if (!userId.trim()) {
+      setError('Vui lòng nhập ID người dùng');
+      return;
+    }
+
+    const result = await login(userId.trim());
+    if (result.success) {
+      if (result.user.role === 'admin') {
+        navigate('/admin');
       } else {
-        setError(result.message);
-      }
-    } else {
-      if (!formData.fullName || !formData.email) {
-        setError('Vui lòng điền đầy đủ thông tin');
-        return;
-      }
-      const result = register(formData);
-      if (result.success) {
         navigate('/dashboard');
       }
+    } else {
+      setError(result.message);
     }
   };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setUserId(e.target.value);
   };
 
   return (
@@ -304,116 +292,36 @@ const LoginPage = () => {
                 </button>
 
                 {/* Header */}
-                <div className="text-center mb-6">
-                  <h2 className="text-2xl font-bold text-slate-900 tracking-tight mb-1">
-                    {isLogin ? 'Đăng nhập' : 'Đăng ký tài khoản'}
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold text-slate-900 mb-2">
+                    Đăng nhập vào MOOCCUBE
                   </h2>
-                  <p className="text-sm text-slate-600">
-                    {isLogin ? 'Chào mừng bạn quay trở lại' : 'Tạo tài khoản mới để bắt đầu học tập'}
+                  <p className="text-sm text-slate-500">
+                    Nhập ID người dùng để truy cập hệ thống học tập
                   </p>
                 </div>
 
-                {/* Tab Switch */}
-                <div className="flex gap-2 mb-6 bg-slate-100 p-1 rounded-lg">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsLogin(true);
-                      setError('');
-                    }}
-                    className={`flex-1 py-2.5 rounded-md font-medium text-sm transition-all duration-200 ${
-                      isLogin
-                        ? 'bg-indigo-600 text-white shadow-sm'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    Đăng nhập
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsLogin(false);
-                      setError('');
-                    }}
-                    className={`flex-1 py-2.5 rounded-md font-medium text-sm transition-all duration-200 ${
-                      !isLogin
-                        ? 'bg-indigo-600 text-white shadow-sm'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    Đăng ký
-                  </button>
-                </div>
-
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-5">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Tên đăng nhập
+                      ID Người dùng
                     </label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                       <input
                         type="text"
-                        name="username"
-                        value={formData.username}
+                        name="userId"
+                        value={userId}
                         onChange={handleChange}
                         className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition-all text-sm"
-                        placeholder="Nhập tên đăng nhập"
+                        placeholder="Nhập ID người dùng (ví dụ: U_10000)"
                         required
                       />
                     </div>
-                  </div>
-
-                  {!isLogin && (
-                    <>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
-                          Họ và tên
-                        </label>
-                        <input
-                          type="text"
-                          name="fullName"
-                          value={formData.fullName}
-                          onChange={handleChange}
-                          className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition-all text-sm"
-                          placeholder="Nhập họ và tên"
-                          required={!isLogin}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
-                          Email
-                        </label>
-                        <input
-                          type="email"
-                          name="email"
-                          value={formData.email}
-                          onChange={handleChange}
-                          className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition-all text-sm"
-                          placeholder="Nhập email"
-                          required={!isLogin}
-                        />
-                      </div>
-                    </>
-                  )}
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Mật khẩu
-                    </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                      <input
-                        type="password"
-                        name="password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition-all text-sm"
-                        placeholder="Nhập mật khẩu"
-                        required
-                      />
-                    </div>
+                    <p className="mt-2 text-xs text-slate-500 bg-indigo-50 p-3 rounded-lg border border-indigo-100">
+                      💡 <strong>Lưu ý:</strong> Chỉ cần nhập User ID (định dạng <code className="font-mono bg-white px-1.5 py-0.5 rounded text-indigo-600 border border-indigo-200">U_xxxxx</code>), không cần mật khẩu
+                    </p>
                   </div>
 
                   {error && (
@@ -426,18 +334,17 @@ const LoginPage = () => {
                     type="submit"
                     className="w-full btn-primary py-3 font-semibold"
                   >
-                    {isLogin ? 'Đăng nhập' : 'Đăng ký'}
+                    Đăng nhập
                   </button>
 
-                  {isLogin && (
-                    <div className="text-center text-sm text-slate-600 mt-4 bg-indigo-50 p-4 rounded-lg border border-indigo-100">
-                      <p className="font-semibold text-slate-900 mb-2">Tài khoản demo:</p>
-                      <div className="space-y-1 text-xs">
-                        <p>Học viên: <span className="font-mono font-semibold text-indigo-700">student1</span> / <span className="font-mono">123456</span></p>
-                        <p>Quản trị: <span className="font-mono font-semibold text-indigo-700">admin</span> / <span className="font-mono">admin123</span></p>
-                      </div>
+                  <div className="text-center text-sm text-slate-600 mt-4 bg-emerald-50 p-4 rounded-lg border border-emerald-100">
+                    <p className="font-semibold text-slate-900 mb-2">Ví dụ User ID:</p>
+                    <div className="space-y-1 text-xs">
+                      <p><code className="font-mono font-semibold text-emerald-700 bg-white px-2 py-1 rounded border border-emerald-200">U_10000</code></p>
+                      <p><code className="font-mono font-semibold text-emerald-700 bg-white px-2 py-1 rounded border border-emerald-200">U_100066</code></p>
+                      <p><code className="font-mono font-semibold text-emerald-700 bg-white px-2 py-1 rounded border border-emerald-200">U_100090</code></p>
                     </div>
-                  )}
+                  </div>
                 </form>
               </motion.div>
             </div>

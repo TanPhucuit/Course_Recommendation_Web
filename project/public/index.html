@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Portal - Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="login-container glass-card">
+        <h1 class="login-title">Course Portal</h1>
+        <p style="margin-bottom: 2rem; color: var(--text-muted);">Khám phá hành trình học tập của bạn</p>
+        <form id="loginForm">
+            <input type="text" id="userId" class="input-field" placeholder="Nhập User ID (VD: U_22)" required>
+            <button type="submit" class="btn-primary">Đăng Nhập</button>
+        </form>
+        <p id="errorMsg" style="color: #ef4444; margin-top: 1rem; display: none;">User ID không tồn tại!</p>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>

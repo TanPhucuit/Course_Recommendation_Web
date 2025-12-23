@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getCourseById } from '../data/mockData';
@@ -9,8 +9,40 @@ const CourseDetailPage = () => {
   const { id } = useParams();
   const { currentUser, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const course = getCourseById(id);
+  const [course, setCourse] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [expandedChapters, setExpandedChapters] = useState([]);
+
+  // Load course data from CSV
+  useEffect(() => {
+    const loadCourse = async () => {
+      setIsLoading(true);
+      const courseData = await getCourseById(id);
+      setCourse(courseData);
+      setIsLoading(false);
+    };
+
+    loadCourse();
+  }, [id]);
+
+  const toggleChapter = (chapterId) => {
+    if (expandedChapters.includes(chapterId)) {
+      setExpandedChapters(expandedChapters.filter(id => id !== chapterId));
+    } else {
+      setExpandedChapters([...expandedChapters, chapterId]);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-light flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-indigo-600 mx-auto mb-4"></div>
+          <p className="text-slate-600 text-lg">Đang tải thông tin khóa học...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!course) {
     return (
@@ -27,14 +59,6 @@ const CourseDetailPage = () => {
       </div>
     );
   }
-
-  const toggleChapter = (chapterId) => {
-    if (expandedChapters.includes(chapterId)) {
-      setExpandedChapters(expandedChapters.filter(id => id !== chapterId));
-    } else {
-      setExpandedChapters([...expandedChapters, chapterId]);
-    }
-  };
 
   // Data for charts (Admin view)
   const enrollmentData = [
@@ -64,7 +88,7 @@ const CourseDetailPage = () => {
 
       <div className="max-w-7xl mx-auto p-6">
         {/* Header Section - 20% */}
-        <div className="bg-gradient-to-r from-primary to-secondary rounded-2xl p-8 mb-6 shadow-lg">
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-8 mb-6 shadow-lg">
           <div className="flex gap-6">
             <img
               src={course.thumbnail}
@@ -132,17 +156,17 @@ const CourseDetailPage = () => {
                       {/* Chapter Header */}
                       <div
                         onClick={() => toggleChapter(chapter.id)}
-                        className="flex items-center justify-between p-5 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+                        className="flex items-center justify-between p-5 bg-gradient-to-r from-blue-500 to-cyan-500 cursor-pointer hover:opacity-90 transition-opacity"
                       >
-                        <h3 className="font-bold text-dark text-lg">{chapter.title}</h3>
+                        <h3 className="font-bold text-white text-lg">{chapter.title || 'Chương học'}</h3>
                         <div className="flex items-center gap-3">
-                          <span className="text-sm text-gray-600">
-                            {chapter.lessons.length} bài học
+                          <span className="text-sm text-white/90">
+                            {chapter.lessons?.length || 0} bài học
                           </span>
                           {expandedChapters.includes(chapter.id) ? (
-                            <ChevronUp className="text-primary" size={24} />
+                            <ChevronUp className="text-white" size={24} />
                           ) : (
-                            <ChevronDown className="text-gray-400" size={24} />
+                            <ChevronDown className="text-white/80" size={24} />
                           )}
                         </div>
                       </div>

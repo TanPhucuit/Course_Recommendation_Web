@@ -39,8 +39,11 @@ const DashboardLayout = ({ children, notifications = [] }) => {
             {/* Notification Dropdown */}
             <NotificationDropdown notifications={notifications} />
 
-            {/* User Info */}
-            <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">
+            {/* User Info - Clickable to Profile */}
+            <button
+              onClick={() => navigate('/profile')}
+              className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+            >
               <img
                 src={currentUser?.avatar}
                 alt={currentUser?.fullName}
@@ -50,7 +53,7 @@ const DashboardLayout = ({ children, notifications = [] }) => {
                 <p className="font-semibold text-slate-900 text-sm">{currentUser?.fullName}</p>
                 <p className="text-xs text-slate-500">{currentUser?.role === 'admin' ? 'Quản trị viên' : 'Học viên'}</p>
               </div>
-            </div>
+            </button>
 
             {/* Logout Button */}
             <button

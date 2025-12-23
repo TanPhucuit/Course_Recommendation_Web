@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Clock, Users, Play, Star } from 'lucide-react';
+import { Clock, Users, Play, Star, BookOpen } from 'lucide-react';
 
 const CourseCard = ({ course, index = 0 }) => {
   const navigate = useNavigate();
@@ -75,6 +75,12 @@ const CourseCard = ({ course, index = 0 }) => {
             <Users size={14} />
             <span>{course.enrolledCount?.toLocaleString() || '0'}</span>
           </div>
+          {course.chapterCount !== undefined && (
+            <div className="flex items-center gap-1">
+              <BookOpen size={14} />
+              <span>{course.chapterCount} chapters</span>
+            </div>
+          )}
         </div>
 
         {/* Progress Bar (if enrolled) */}

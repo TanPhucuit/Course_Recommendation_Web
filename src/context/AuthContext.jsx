@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authenticateUser } from '../data/mockData';
+import dataLoader from '../services/dataLoader';
 
 const AuthContext = createContext(null);
 
@@ -16,36 +17,17 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = (username, password) => {
-    const user = authenticateUser(username, password);
+  const login = async (userId) => {
+    // Clear dataLoader cache để force reload CSV data mới
+    dataLoader.clearCache();
+    
+    const user = await authenticateUser(userId);
     if (user) {
       setCurrentUser(user);
       localStorage.setItem('currentUser', JSON.stringify(user));
       return { success: true, user };
     }
-    return { success: false, message: 'Tên đăng nhập hoặc mật khẩu không đúng' };
-  };
-
-  const register = (userData) => {
-    // Giả lập đăng ký - trong thực tế cần gọi API
-    const newUser = {
-      id: `user${Date.now()}`,
-      username: userData.username,
-      password: userData.password,
-      role: 'user',
-      fullName: userData.fullName,
-      email: userData.email,
-      avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`,
-      enrolledCourses: [],
-      completedCourses: [],
-      progress: {
-        overall: 0,
-        courses: {}
-      }
-    };
-    setCurrentUser(newUser);
-    localStorage.setItem('currentUser', JSON.stringify(newUser));
-    return { success: true, user: newUser };
+    return { success: false, message: 'ID người dùng không hợp lệ hoặc không tồn tại' };
   };
 
   const logout = () => {
@@ -56,7 +38,6 @@ export const AuthProvider = ({ children }) => {
   const value = {
     currentUser,
     login,
-    register,
     logout,
     loading,
     isAuthenticated: !!currentUser,

@@ -1,4 +1,6 @@
 // Mock Data for LMS Application
+import dataLoader from '../services/dataLoader';
+import translationService from '../services/translationService';
 
 export const teamInfo = {
   groupName: "NHÓM 7 - LỚP DS317",
@@ -401,17 +403,107 @@ export const mockAdminLogs = [
   }
 ];
 
-// Helper function to get user by credentials
-export const authenticateUser = (username, password) => {
-  const user = [...mockUsers, ...mockAdmins].find(
-    u => u.username === username && u.password === password
-  );
-  return user || null;
+// Helper function to get user by credentials - Now supports userId-only login
+export const authenticateUser = async (userId) => {
+  // Check if it's a userId (format: U_xxxxx)
+  if (dataLoader.isValidUserId(userId)) {
+    // Login with userId only (no password required)
+    const [userData, userInfo] = await Promise.all([
+      dataLoader.getUserData(userId),
+      dataLoader.loadUserInfo(userId)
+    ]);
+    
+    return {
+      id: userId,
+      username: userId,
+      password: '', // No password needed
+      role: 'user',
+      fullName: userInfo.fullName,
+      gender: userInfo.gender,
+      school: userInfo.school,
+      yearOfBirth: userInfo.yearOfBirth,
+      email: `${userId}@mooccube.vn`,
+      avatar: `https://i.pravatar.cc/150?u=${userId}`,
+      enrolledCourses: userData.enrolledCourses,
+      completedCourses: userData.completedCourses,
+      progress: userData.progress
+    };
+  }
+  
+  return null;
 };
 
-// Helper function to get course by ID
-export const getCourseById = (courseId) => {
-  return mockCourses.find(c => c.id === courseId);
+export const getCourseById = async (courseId) => {
+  const baseCourse = mockCourses.find(c => c.id === courseId);
+  
+  const [coursesData, chaptersData] = await Promise.all([
+    dataLoader.loadCoursesData(),
+    dataLoader.loadChaptersData()
+  ]);
+  
+  if (!baseCourse) {
+    if (coursesData[courseId]) {
+      const csvChapters = chaptersData[courseId];
+      const chapters = csvChapters ? dataLoader.convertChaptersToMockFormat(csvChapters.chapters) : [];
+      const chapterCount = chapters.reduce((sum, ch) => sum + (ch.lessons?.length || 0), 0);
+      
+      // Translate title and description
+      const originalTitle = csvChapters?.courseName || `Khóa học ${courseId}`;
+      const originalDescription = coursesData[courseId].description;
+      
+      const [translatedTitle, translatedDescription] = await translationService.translateBatch([
+        originalTitle,
+        originalDescription
+      ]);
+      
+      return {
+        id: courseId,
+        title: translatedTitle,
+        category: "General",
+        instructor: "Giảng viên",
+        school: "MOOCCUBE",
+        duration: "Đang cập nhật",
+        videoCount: csvChapters?.chapters?.length || 0,
+        exerciseCount: 0,
+        thumbnail: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400",
+        description: translatedDescription,
+        enrolledCount: coursesData[courseId].enrolledCount || 0,
+        completedCount: 0,
+        chapters: chapters,
+        chapterCount: chapterCount
+      };
+    }
+    return null;
+  }
+  
+  const csvCourse = coursesData?.[courseId];
+  const csvChapters = chaptersData?.[courseId];
+  
+  if (csvCourse || csvChapters) {
+    const chapters = csvChapters ? dataLoader.convertChaptersToMockFormat(csvChapters.chapters) : baseCourse.chapters;
+    const chapterCount = chapters.reduce((sum, ch) => sum + (ch.lessons?.length || 0), 0);
+    
+    // Translate title and description if from CSV
+    const originalTitle = csvChapters?.courseName || baseCourse.title;
+    const originalDescription = csvCourse?.description || baseCourse.description;
+    
+    const [translatedTitle, translatedDescription] = await translationService.translateBatch([
+      originalTitle,
+      originalDescription
+    ]);
+    
+    return {
+      ...baseCourse,
+      title: translatedTitle,
+      description: translatedDescription,
+      chapters: chapters,
+      videoCount: csvChapters?.chapters?.length || baseCourse.videoCount,
+      enrolledCount: csvCourse?.enrolledCount || baseCourse.enrolledCount,
+      chapterCount: chapterCount
+    };
+  }
+  
+  return baseCourse;
 };
 
 // Helper function to get AI suggested courses (giả lập dựa trên profile người dùng)
